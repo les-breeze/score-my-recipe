@@ -40,7 +40,7 @@ class RecipeIngredient(BaseModel):
                     "codified_ingredient": "apple",
                     "quantity_g": 150.0,
                     "origins": "en:france",      
-                    "labels": "en:organic",     
+                    "labels": ["en:organic"],     
                 }
             ]
         }
