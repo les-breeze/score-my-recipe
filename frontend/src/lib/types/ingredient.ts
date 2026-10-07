@@ -49,7 +49,7 @@ export interface IngredientSuggestion extends TaxonomyItem {
 	hasEfScore: boolean;
 
 	is_fresh_plant?: boolean | null;
-	seasonality?: string | null;
+	is_in_season?: boolean | null;
 }
 
 /**

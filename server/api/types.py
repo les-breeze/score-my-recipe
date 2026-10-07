@@ -394,7 +394,7 @@ class SuggestedIngredient(Ingredient):
         ),
     ]
     is_fresh_plant: bool | None = None
-    seasonality: str | None = None
+    is_in_season: bool | None = None
 
 
 class IngredientsRequest(TaxonomyRequest):

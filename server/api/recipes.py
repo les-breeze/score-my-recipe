@@ -214,7 +214,7 @@ async def get_countries(lang: str, include_synonyms: bool = False) -> list[types
 # ``has_ef_score`` is True when the ingredient resolves (via its node and
 # parents) to an Agribalyse row carrying a non-empty EF score — i.e. it is
 # scorable in the green-score computation (see api.score.gather_ef_metrics).
-IngredientEntry = tuple[str, str, list[str] | None, bool, bool | None, str | None]
+IngredientEntry = tuple[str, str, list[str] | None, bool, bool | None, bool | None]
 
 
 @async_lru_cache(maxsize=200)
@@ -235,22 +235,20 @@ async def _get_ingredients_entries(lang: str) -> list[IngredientEntry]:
         # that row carries a score
         has_ef_score = bool(row and row.get("score"))
         is_fresh_plant = None
-        seasonality = None 
+        is_in_season = None
 
         for ancestor in off._node_chain(node):
             months_csv = off._property_value(ancestor, "season_in_country_fr")
             if months_csv:
+                # we have a seasonality, we consider it's a plant
                 is_fresh_plant = True
-                current_month = str(datetime.date.today().month).zfill(2)
-                valid_months = [m.strip() for m in months_csv.split(",")]
 
-                if current_month in valid_months or str(datetime.date.today().month) in valid_months:
-                    seasonality = "in_season"
-                else:
-                    seasonality = "out_of_season"
+                current_month = datetime.date.today().month
+                season_months = [int(m) for m in months_csv.split(",") if m.isdecimal()]
+                is_in_season = current_month in season_months
                 break
             
-        entries.append((ingredient_id, label, synonyms, has_ef_score, is_fresh_plant, seasonality))
+        entries.append((ingredient_id, label, synonyms, has_ef_score, is_fresh_plant, is_in_season))
     # sort by id for predictable order
     entries.sort(key=lambda x: x[0])
     return entries
@@ -269,10 +267,10 @@ async def get_ingredients(
             synonyms=ingredient_synonyms if include_synonyms else None,
             has_ef_score=has_ef_score,
             is_fresh_plant=is_fresh_plant,
-            seasonality=seasonality
+            is_in_season=is_in_season
         )
         for ingredient_id, ingredient_label, ingredient_synonyms, has_ef_score,
-         is_fresh_plant, seasonality in _ingredients
+         is_fresh_plant, is_in_season in _ingredients
     ]
 
 

@@ -891,8 +891,8 @@ export interface components {
             has_ef_score: boolean;
             /** Is Fresh Plant */
             is_fresh_plant?: boolean | null;
-            /** Seasonality */
-            seasonality?: string | null;
+            /** Is In Season */
+            is_in_season?: boolean | null;
         };
         /**
          * TaxonomyItem
