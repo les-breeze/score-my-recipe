@@ -86,7 +86,7 @@
 		}
 	}
 
-	function handleCodifiedIngredientChange(newTags: any[]) {
+	function handleCodifiedIngredientChange(newTags: IngredientSuggestion[]) {
 		const tag = newTags[0] ?? null;
 		ingredient.codifiedIngredient = tag;
 
