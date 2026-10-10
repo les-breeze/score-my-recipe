@@ -618,6 +618,16 @@ export interface components {
 			 * @description Notes about the ingredient
 			 */
 			notes?: string[] | null;
+			/**
+			 * Is In Season
+			 * @description Whether the ingredient is in season
+			 */
+			is_in_season?: boolean | null;
+			/**
+			 * Is Fresh Plant
+			 * @description Whether the ingredient is a fresh plant
+			 */
+			is_fresh_plant?: boolean | null;
 		};
 		/**
 		 * RecipeIngredientInput

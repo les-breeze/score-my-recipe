@@ -69,6 +69,15 @@ async def off_ingredient_to_recipe_ingredient(
                 quantity_value = float(matched.group("value"))
             if matched.group("unit"):
                 quantity_unit = matched.group("unit")
+                
+    # fetch seasonality
+    is_fresh_plant, is_in_season = None, None
+    if off_ingredient.id:
+        ingredients_taxonomy = await off.get_ingredients_taxonomy()
+        if off_ingredient.id in ingredients_taxonomy:
+            node = ingredients_taxonomy[off_ingredient.id]
+            is_fresh_plant, is_in_season = get_seasonality_info(node)
+
     ingredient = types.RecipeIngredient(
         taxonomy_id=off_ingredient.id,
         codified_ingredient=off_ingredient.text,
@@ -79,6 +88,8 @@ async def off_ingredient_to_recipe_ingredient(
         quantity_value=quantity_value,
         quantity_unit=quantity_unit,
         notes=notes,
+        is_fresh_plant=is_fresh_plant,
+        is_in_season=is_in_season,
     )
     return ingredient
 
@@ -217,6 +228,25 @@ async def get_countries(lang: str, include_synonyms: bool = False) -> list[types
 IngredientEntry = tuple[str, str, list[str] | None, bool, bool | None, bool | None]
 
 
+def get_seasonality_info(node) -> tuple[bool | None, bool | None]:
+    """Extract seasonality and fresh plant status from a taxonomy node"""
+    is_fresh_plant = None
+    is_in_season = None
+
+    for ancestor in off._node_chain(node):
+        months_csv = off._property_value(ancestor, "season_in_country_fr")
+        if months_csv:
+            # we have a seasonality, we consider it's a plant
+            is_fresh_plant = True
+
+            current_month = datetime.date.today().month
+            season_months = [int(m) for m in months_csv.split(",") if m.isdecimal()]
+            is_in_season = current_month in season_months
+            break
+            
+    return is_fresh_plant, is_in_season
+
+
 @async_lru_cache(maxsize=200)
 async def _get_ingredients_entries(lang: str) -> list[IngredientEntry]:
     """Internal version of get_ingredients that caches the result for a given language code.
@@ -234,19 +264,8 @@ async def _get_ingredients_entries(lang: str) -> list[IngredientEntry]:
         # An ingredient is scorable only when it matches an Agribalyse row AND
         # that row carries a score
         has_ef_score = bool(row and row.get("score"))
-        is_fresh_plant = None
-        is_in_season = None
-
-        for ancestor in off._node_chain(node):
-            months_csv = off._property_value(ancestor, "season_in_country_fr")
-            if months_csv:
-                # we have a seasonality, we consider it's a plant
-                is_fresh_plant = True
-
-                current_month = datetime.date.today().month
-                season_months = [int(m) for m in months_csv.split(",") if m.isdecimal()]
-                is_in_season = current_month in season_months
-                break
+        
+        is_fresh_plant, is_in_season = get_seasonality_info(node)
             
         entries.append((ingredient_id, label, synonyms, has_ef_score, is_fresh_plant, is_in_season))
     # sort by id for predictable order
